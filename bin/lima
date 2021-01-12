@@ -4,6 +4,6 @@ let lima = require("../dist/lima")
 
 lima.cli(process.argv.slice(2))
 	.catch(error => {
-		process.stderr.write(error.message)
+		process.stderr.write(error.message + "\n")
 		exit(22)
 	})
