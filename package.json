@@ -1,6 +1,6 @@
 {
   "name": "@chee/lima",
-  "version": "1.0.0-alpha.0",
+  "version": "1.0.0-alpha.1",
   "description": "",
   "main": "dist/lima.js",
   "bin": {
@@ -23,6 +23,7 @@
   "dependencies": {
     "make-dir": "^2.1.0",
     "mdast-util-from-markdown": "^0.8.4",
-    "micromark": "^2.11.2"
+    "micromark": "^2.11.2",
+    "untildify": "^4.0.0"
   }
 }
