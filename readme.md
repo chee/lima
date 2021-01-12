@@ -31,18 +31,17 @@ you see the option is passed in the info string after the file type.
 
 ### valid options
 
-| option | type | info |
-| -- | -- | -- |
-| filename | string | required for the block to be tangled, but optional |
-| chmod | octal number or `ls -l`-like string | the mode the file should have |
-| chown | string or number | the user name or id the file should have |
-| chgrp | string or number | the group name or id the file should have |
-| shebang | string | the shebang to put at the top of the file. if `chmod` is unset, this will set the executable bit |
-| sudo | bool | if the file should be written as root |
-| if | string | an environment variable that must be present for the file to be written
-| unless | string | an environment variable that must not be present for the file to be written |
-| name | string | a name for this codeblock |
-
+| option | type | info | implemented? |
+| -- | -- | -- | -- |
+| filename | string | required for the block to be tangled, but optional | 👍 |
+| chmod | number (interpreted as octal) | the mode the file should have | 👍 |
+| shebang | string | the shebang to put at the top of the file. if `chmod` is unset, this will set the executable bit | 👍 |
+| name | string | a name for this codeblock | yes, but it can't be used until noweb is added |
+| chown | string or number | the user name or id the file should have | no |
+| chgrp | string or number | the group name or id the file should have | no |
+| sudo | bool | if the file should be written as root | no |
+| if | string | an environment variable that must be present for the file to be written | no |
+| unless | string | an environment variable that must not be present for the file to be written | no |
 
 ## weave
 
