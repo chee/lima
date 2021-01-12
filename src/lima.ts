@@ -5,6 +5,7 @@ import { createWriteStream, existsSync, promises as fs } from "fs"
 import path from "path"
 import MetaParser from "./lib/meta-parser"
 import mkdir_p from "make-dir"
+import home from "untildify"
 
 class NotImplementedError extends Error { }
 
@@ -46,19 +47,20 @@ async function handleCode(code: Code) {
 	}
 	let meta = parseMeta(code.meta)
 	if (meta.filename) {
-		let isNew = !filesSeen.includes(meta.filename)
+		let fn = home(meta.filename)
+		let isNew = !filesSeen.includes(fn)
 		let flags = "a"
 		
 		if (isNew) {
-			filesSeen.push(meta.filename);
+			filesSeen.push(fn);
 			flags = "w"
 		}
 
-		if (path.basename(meta.filename) != meta.filename) {
-			await mkdir_p(path.dirname(meta.filename))
+		if (path.basename(fn) != fn) {
+			await mkdir_p(path.dirname(fn))
 		}
 		
-		let stream = createWriteStream(meta.filename, { encoding: "utf-8", flags })
+		let stream = createWriteStream(fn, { encoding: "utf-8", flags })
 		
 		// the shebang must be on the first codeblock for that file
 		// FIXME maybe
@@ -84,13 +86,13 @@ async function handleCode(code: Code) {
 				throw new NotImplementedError("sorry, please provide an octal number like 755 for now")
 			} else if (typeof meta.chmod == "number") {
 				// node takes strings to be octal, we take the number to be octal.
-				fs.chmod(meta.filename, "" + meta.chmod)
+				fs.chmod(fn, "" + meta.chmod)
 			} else {
 				throw new TypeError(`chmod should be number or string, got ${meta.chmod}`)
 			}
 			
 		} else if (meta.shebang) {
-			fs.chmod(meta.filename, 0o755)
+			fs.chmod(fn, 0o755)
 		}
 	}
 }
