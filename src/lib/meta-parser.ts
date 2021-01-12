@@ -52,10 +52,10 @@ export default class MetaParser {
 					let value = string[1]
 					this.result[this.property] = value
 					this.source = this.source.slice(2 + value.length)
-				} else if (this.source.match(/^false[,\s]/)) {
+				} else if (this.source.match(/^false\b/)) {
 					this.result[this.property] = false
 					this.source = this.source.slice(5)
-				} else if (this.source.match(/^true[,\s]/)) {
+				} else if (this.source.match(/^true\b/)) {
 					this.result[this.property] = true
 					this.source = this.source.slice(4)
 				} else {
