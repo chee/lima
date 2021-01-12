@@ -5,15 +5,18 @@ enum MetaParserState {
 	end
 }
 
+type Meat = {[property: string]: boolean|number|string}
+
 export default class MetaParser {
 	state = MetaParserState.begin
-	result: {[s: string]: any} = {}
+	result: Meat = {}
 	source = ""
 	property = ""
-	constructor(source: string) {
+	parse(source: string): Meat {
 		this.source = source
-	}
-	parse() {
+		this.state = MetaParserState.begin
+		this.result = {}
+		this.property = ""
 		while (this.source.length) {
 			this.next()
 		}
