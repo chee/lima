@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+const { exit } = require("process")
+let lima = require("../dist/lima")
+
+lima.cli(process.argv.slice(2))
+	.catch(error => {
+		process.stderr.write(error.message)
+		exit(22)
+	})
