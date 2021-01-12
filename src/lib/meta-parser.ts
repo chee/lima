@@ -58,6 +58,12 @@ export default class MetaParser {
 				} else if (this.source.match(/^true\b/)) {
 					this.result[this.property] = true
 					this.source = this.source.slice(4)
+				} else if (this.source.match(/^yes\b/)) {
+					this.result[this.property] = true
+					this.source = this.source.slice(3)
+				} else if (this.source.match(/^no\b/)) {
+					this.result[this.property] = false
+					this.source = this.source.slice(2)
 				} else {
 					let numbers = this.source.match(/^(\d+)(?:\s|,|$)/)
 					if (numbers) {
