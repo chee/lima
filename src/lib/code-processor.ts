@@ -54,7 +54,12 @@ export default class CodeProcessor {
 				stream.write("#!" + meta.shebang + "\n")
 			}
 
-			stream.write(this.tmpl(code.value) + "\n")
+			if (meta.expand) {
+				stream.write(this.tmpl(code.value) + "\n")
+			} else {
+				stream.write(code.value + "\n")
+			}
+
 			stream.close()
 
 			if (meta.shebang) {

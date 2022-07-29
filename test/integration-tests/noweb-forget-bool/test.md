@@ -1,4 +1,6 @@
-# okay, here comes a test of the noweb syntax
+# nonoweb
+
+it shouldn't expand if there is no "noweb=yes"
 
 ```python name="printy"
 	print(f"i am the {x}")
@@ -8,7 +10,7 @@
 import sys
 ```
 
-```python filename="./actual.py", shebang="#!/usr/bin/env python", expand=yes
+```python filename="./actual.py" shebang="#!/usr/bin/env python"
 <<imports>>
 
 for x in sys.argv:
@@ -32,7 +34,7 @@ for x in sys.argv:
   pepcarn
 ```
 
-```text filename="actual.txt", expand=yes
+```text filename="actual.txt"
 hello!
 
 these are the dogs:
