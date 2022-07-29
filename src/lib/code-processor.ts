@@ -31,7 +31,7 @@ export default class CodeProcessor {
 			let fn = house(meta.filename)
 			let isNew = !this.seen.includes(fn)
 			let flags = "a"
-			let shebang = meta["#!"]
+			let shebang = meta.shebang || meta["#!"]
 
 			if (isNew) {
 				this.seen.push(fn);
