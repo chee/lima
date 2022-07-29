@@ -2,6 +2,16 @@
 
 lima is a minimal implementation of **li**terate **ma**rkdown.
 
+## terminology
+
+- **_weave_/_woven_** :: the documentation generated for viewing by a person is said
+  to weave both prose and code. for example, a web page or pdf.
+- ***tangle_/_tangled*** :: the code extracted from the source document into a form
+  for execution or compilation by a computer is said to be "tangled" for some
+  reason.
+- **_metaline_** :: a line of comma/space separated key=value pairs for providing
+  instructions to lima on how a block of code should be tangled
+
 ## tangle
 
 ```shell
