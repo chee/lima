@@ -28,7 +28,7 @@ export default class MetaParser {
 				this.source = this.source.replace(/^\s+/, "")
 				let f = this.source[0]
 				if (f == "=" || f == '"' || f == ",") {
-					// TODO store problem and move alone
+					// TODO store problem and move along
 					throw new Error(`invalid char at 0: ${f}`)
 				} else {
 					this.state = MetaParserState.property
