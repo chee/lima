@@ -31,7 +31,7 @@ here is some code:
 
 
 have a look in
-[./test/integration-tests/sum](./test/integration-tests/sum/test.md) to see this
+[./test/integration-tests/sum](./test/integration-tests/sum/) to see this
 example
 
 you see the option is passed in the info string after the file type.
@@ -45,7 +45,7 @@ if you give a block a `name` (rather than a `filename`), you can refer to it in
 a later block and have it included.
 
 have a look in
-[./test/integration-tests/noweb](./test/integration-tests/noweb/test.md) for an
+[./test/integration-tests/noweb](./test/integration-tests/noweb/) for an
 example
 
 ### valid options
