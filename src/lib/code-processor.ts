@@ -1,7 +1,7 @@
 import path from "path"
 import MetaParser from "./meta-parser"
 import mkdir_p from "make-dir"
-import home from "untildify"
+import house from "untildify"
 import type {Code} from "mdast"
 import {createWriteStream, promises as fs} from "fs"
 
@@ -28,7 +28,7 @@ export default class CodeProcessor {
 			this.blocks[meta.name] = code.value
 		}
 		if (typeof meta.filename == "string") {
-			let fn = home(meta.filename)
+			let fn = house(meta.filename)
 			let isNew = !this.seen.includes(fn)
 			let flags = "a"
 
@@ -41,12 +41,17 @@ export default class CodeProcessor {
 				await mkdir_p(path.dirname(fn))
 			}
 
-			let stream = createWriteStream(fn, { encoding: "utf-8", flags })
+			let stream = createWriteStream(fn, {
+				encoding: "utf-8",
+				flags,
+				mode: meta.shebang
+					? /* 0o755 */ 493
+					: undefined
+			})
 
 			// the shebang must be on the first codeblock for that file
-			// FIXME maybe
 			if (meta.shebang && isNew) {
-				stream.write(meta.shebang + "\n")
+				stream.write("#!" + meta.shebang + "\n")
 			}
 
 			stream.write(this.tmpl(code.value) + "\n")
@@ -55,6 +60,10 @@ export default class CodeProcessor {
 			if (meta.shebang) {
 				await fs.chmod(fn, 0o755)
 			}
+
+			return new Promise(yay => {
+				stream.on("close", yay)
+			})
 		} else if ("filename" in meta) {
 			throw new TypeError(`filename must be a string, got ${meta.filename}`)
 		}

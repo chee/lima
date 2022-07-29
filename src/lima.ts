@@ -16,7 +16,7 @@ export async function cli(args: string[]) {
 	if (command != "tangle") {
 		return usage(new Error("only tangling is supported"))
 	}
-	
+
 	if (!existsSync(path)) {
 		return usage(new Error("source file must exist"))
 	}
@@ -32,6 +32,8 @@ async function walk(node: Node) {
 	if (node.type == "code") {
 		await code.process(node as Code)
 	} else if ("children" in node && Array.isArray(node.children)) {
-		await Promise.all(node.children.map(n => walk(n)))
+		for (let child of node.children) {
+			await walk(child)
+		}
 	}
 }
