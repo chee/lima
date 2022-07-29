@@ -8,7 +8,7 @@
 import sys
 ```
 
-```python filename="./actual.py", shebang="#!/usr/bin/env python", expand=yes
+```python #!="/usr/bin/env python3", filename="./actual.py", expand=yes
 <<imports>>
 
 for x in sys.argv:

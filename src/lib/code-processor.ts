@@ -31,6 +31,7 @@ export default class CodeProcessor {
 			let fn = house(meta.filename)
 			let isNew = !this.seen.includes(fn)
 			let flags = "a"
+			let shebang = meta["#!"]
 
 			if (isNew) {
 				this.seen.push(fn);
@@ -44,14 +45,14 @@ export default class CodeProcessor {
 			let stream = createWriteStream(fn, {
 				encoding: "utf-8",
 				flags,
-				mode: meta.shebang
+				mode: shebang
 					? /* 0o755 */ 493
 					: undefined
 			})
 
 			// the shebang must be on the first codeblock for that file
-			if (meta.shebang && isNew) {
-				stream.write("#!" + meta.shebang + "\n")
+			if (shebang && isNew) {
+				stream.write("#!" + shebang + "\n")
 			}
 
 			if (meta.expand) {
@@ -62,7 +63,7 @@ export default class CodeProcessor {
 
 			stream.close()
 
-			if (meta.shebang) {
+			if (shebang) {
 				await fs.chmod(fn, 0o755)
 			}
 

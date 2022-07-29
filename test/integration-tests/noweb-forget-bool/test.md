@@ -10,7 +10,7 @@ it shouldn't expand if there is no "noweb=yes"
 import sys
 ```
 
-```python filename="./actual.py" shebang="#!/usr/bin/env python"
+```python filename="./actual.py" #!="/usr/bin/env python"
 <<imports>>
 
 for x in sys.argv:

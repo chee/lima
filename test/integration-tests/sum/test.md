@@ -30,6 +30,6 @@ int main () {
 
 this is a very smol script
 
-```sh filename="actual.sh", shebang="/bin/sh"
+```sh filename="actual.sh", #!="/bin/sh"
 ls
 ```

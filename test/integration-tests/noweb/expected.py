@@ -1,5 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import sys
 
 for x in sys.argv:
-	print(f"i am the {x}")
+		print(f"i am the {x}")

@@ -65,7 +65,7 @@ example
 |----------|--------|--------------------------------------------------------|--------------|
 | filename | string | required for the block to be tangled, but optional     | 👍           |
 | name     | string | a name for this codeblock                              | 👍           |
-| shebang  | string | shebang to add at top of file. sets the executable bit | 👍           |
+| #!       | string | shebang to add at top of file. sets the executable bit | 👍           |
 | expand   | bool   | expand noweb templates                                 | 👍           |
 
 strings are added like `option="value"`. bools can be `option=yes` or
