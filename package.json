@@ -1,6 +1,6 @@
 {
   "name": "@chee/lima",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0",
   "description": "",
   "main": "dist/lima.js",
   "bin": {
