@@ -1,7 +1,0 @@
-hello!
-
-these are the dogs:
-<<dogs>>
-
-these are the cats:
-<<cats>>
