@@ -22,11 +22,6 @@ the syntax is inspired by the beautiful <!-- and complex -->
 - **_tangle_/_tangled_** :: the code extracted from the source document into a
   form for execution or compilation by a computer is said to be "tangled" for
   some reason.
-- **_web_/_noweb_** ::
-  [web](https://www-cs-faculty.stanford.edu/~knuth/cweb.html) is the original
-  literate programming tool by
-  knuth. [noweb](https://www.cs.tufts.edu/~nr/noweb/) is another
-  implementation of the concept which introduces a templating syntax.
 - **_metaline_** :: a line of comma/space separated key=value pairs for
   providing instructions to `lima` on how a block of code should be tangled
 
@@ -35,10 +30,7 @@ the syntax is inspired by the beautiful <!-- and complex -->
 | option   | type   | info                                                   |
 |----------|--------|--------------------------------------------------------|
 | filename | string | required for the block to be tangled, but optional     |
-| name     | string | a name for this codeblock                              |
 | #!       | string | shebang to add at top of file. sets the executable bit |
-| expand   | bool   | expand noweb-style templates                           |
-
 
 strings are added like `option="value"`. bools can be `option=yes` or
 `option=no`. `shebang` is available as an alias for `#!`.
@@ -46,23 +38,6 @@ strings are added like `option="value"`. bools can be `option=yes` or
 #### implementation
 
 see [metaline processor](#metaline-processor) for the implementation details.
-
-### noweb
-
-you can perform very basic replacements with a syntax inspired by
-[noweb](https://www.cs.tufts.edu/~nr/noweb/).
-
-if the metaline for your codeblock contains a `name` (rather than a `filename`),
-you can refer to it in a later codeblock (`name="monkey"` would be called as
-`<<monkey>>`) and have it expanded to the contents of the codeblock.
-
-to enable this, set `expand` to `true` in the metaline of the referencing block.
-
-have a look in
-[https://git.sr.ht/~chee/lima-tests/tree/main/item/noweb/](lima-tests/noweb) for
-an example.
-
-see [CodeNodeProcessor](#tmpl) for the implementation details.
 
 ### weave
 
@@ -365,20 +340,6 @@ export default class CodeNodeProcessor {
   seen: Set<string> = new Set
   parser = new MetalineParser()
 ```
-### tmpl
-
-we gather up named blocks here for use with the [noweb](#noweb) syntax. if the author has
-set the `expand` property to `yes` then we will replace any references to
-`<<block_name>>` with the block content in the produced code.
-
-```typescript filename="src/lib/code-node-processor.ts"
-  blocks: {[name: string]: string} = {}
-  tmpl(codeblock: string) {
-    return codeblock.replace(new RegExp("\<\<(" + Object.keys(this.blocks).join("|") + ")\>\>", "g"), (_, name) =>
-      this.blocks[name]
-    )
-  }
-```
 
 ### process
 
@@ -400,20 +361,6 @@ otherwise, parse the metaline using the [metaline parser](#metaline-parser)
 
 ```typescript filename="src/lib/code-node-processor.ts"
     let meta = this.parser.parse(code.meta)
-```
-
-if we already have a template block by this name, let the user know they are
-overriding it. they may want to do this, so it's not an error. either way, we
-store the block for later.
-
-```typescript filename="src/lib/code-node-processor.ts"
-    if (typeof meta.name == "string") {
-      if (this.blocks[meta.name]) {
-        process.stderr.write(`warning: overwriting ${meta.name}\n`)
-      }
-
-      this.blocks[meta.name] = code.value
-    }
 ```
 
 #### metaline with filename
@@ -466,19 +413,8 @@ adds a shebang to a later block but we emit a warning. i'm streamin' here.
                 process.stderr.write(`warning: ignoring shebang on already-seen file\n`)
           process.stderr.write(`(only the first reference to a file should set a shebang)\n`)
       }
-```
 
-[.tmpl](#tmpl)
-
-```typescript filename="src/lib/code-node-processor.ts"
-      if (meta.expand) {
-        stream.write(this.tmpl(code.value) + "\n")
-      } else {
-        stream.write(code.value + "\n")
-      }
-```
-
-```typescript filename="src/lib/code-node-processor.ts"
+		stream.write(code.value + "\n")
       stream.close()
 
       return new Promise(yay => {
@@ -637,3 +573,20 @@ lima.cli(process.argv.slice(2))
 - maybe investigate some way of declaring dictionaries
 - strict mode with errors for unknown properties
 - investigate an `indent=2` metaline opt? not sure how to best to deal with nesting.
+## publish script
+
+```fish #!="/usr/bin/env fish", filename="scripts/publish.fish"
+set -q argv[1]; or begin
+	echo "publish.fish <npm_version_arg>"
+	exit 28
+end
+./bin/lima README.md
+npm run build
+./bin/lima README.md
+npm run build
+npm version $argv[1] --no-git-tag-version
+rm .gitignore
+npm publish
+sed -i'' 's/^\\s\\+"version".*/  "version": "'(jq -r .version package.json)'",/' README.md
+echo '*' > .gitignore
+```
