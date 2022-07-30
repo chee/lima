@@ -564,15 +564,6 @@ lima.cli(process.argv.slice(2))
 }
 ```
 
-## todo
-
-- stream in and out, there's no reason this program shouldn't be able to be a
-  unix-style filter program
-- maybe add `weave`
-- maybe add noweb variable syntax `[[m = 1000]]`
-- maybe investigate some way of declaring dictionaries
-- strict mode with errors for unknown properties
-- investigate an `indent=2` metaline opt? not sure how to best to deal with nesting.
 ## publish script
 
 ```fish #!="/usr/bin/env fish", filename="scripts/publish.fish"
