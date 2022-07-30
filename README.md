@@ -519,13 +519,12 @@ lima.cli(process.argv.slice(2))
   })
 ```
 
-
 ## package info
 
 ```json filename="package.json"
 {
   "name": "@chee/lima",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "literate programming with markdown",
   "main": "dist/lima.js",
   "bin": {
