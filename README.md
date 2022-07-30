@@ -94,12 +94,11 @@ the metaline would be the part that looks like this:
 (that example would set the output filename to `hello_world.rb`, set the first line
 of the file to `"#!/usr/bin/env ruby"` and activate the executable bit :))
 
-we're going to parse the metaline using a state machine.
+### metaline types
 
-### meta type
+parsing returns a `Metaline`.
 
-the metaline is parsed to a `Metaline`, an object of arbitrary keys whose values
-can be bools or strings.
+`Metaline` is a map of `string` keys to `bool` or string`` values.
 
 ```typescript filename="src/lib/metaline-parser.ts"
 type Metaline = {[property: string]: boolean|string}
@@ -330,9 +329,9 @@ added when i imagined lima being used for system-wide literate dotfiles (docfile
 ```typescript filename="src/lib/code-node-processor.ts"
 import expandTilde from "untildify"
 import path from "path"
-import MetalineParser from "./metaline-parser"
+import MetalineParser from "./metaline-parser.js"
 import makeDirectory from "make-dir"
-import {createWriteStream, promises as fs} from "fs"
+import {createWriteStream} from "fs"
 ```
 
 ```typescript filename="src/lib/code-node-processor.ts"
@@ -434,22 +433,60 @@ i think i mentioned before that code node processor operates on an mdast
 codeblock
 
 ```typescript filename="./src/lima.ts"
-import eat from "mdast-util-from-markdown"
+import {unified} from "unified"
+import type {CompilerFunction} from "unified"
+import {stream} from "unified-stream"
+import remarkParse from "remark-parse"
+import remarkFrontmatter from "remark-frontmatter"
+import remarkGfm from "remark-gfm"
 import type {Code} from "mdast"
-import {existsSync, promises as fs} from "fs"
-import CodeNodeProcessor from "./lib/code-node-processor"
+import {createReadStream, existsSync} from "fs"
+import CodeNodeProcessor from "./lib/code-node-processor.js"
 ```
 
-### usage writer
-
-when it errors in debug mode, we print the error. we always print usage.
+### usage printer
 
 ```typescript filename="./src/lima.ts"
 export function usage(error: Error) {
-  if (process.env.DEBUG) {
-    process.stdout.write(error.message + "\n")
-  }
+  process.stderr.write(error.message + "\n")
   process.stdout.write("lima tangle <file>\n")
+  process.exit(2)
+}
+```
+
+```typescript filename="./src/lima.ts"
+function getStream(path?: string) {
+  if (path) {
+    if (existsSync(path)) {
+      return createReadStream(path)
+    } else {
+      throw new Error(`no such file ${path}`)
+    }
+  } else {
+		return process.stdin
+  }
+}
+```
+
+### unist tangle
+
+we create a `CodeNodeProcessor`, and then we recursively walk the document
+looking for code nodes, and if we find a code node then we invite the
+`CodeNodeProcessor` to take a look.
+
+```typescript filename="./src/lima.ts"
+function tangle(this: typeof tangle) {
+  let code = new CodeNodeProcessor
+  Object.assign(this, {Compiler: walk})
+  async function walk(node: any) {
+    if (node.type == "code") {
+      await code.process(node as Code)
+    } else if ("children" in node && Array.isArray(node.children)) {
+      for (let child of node.children) {
+        await walk(child)
+      }
+    }
+  }
 }
 ```
 
@@ -458,7 +495,7 @@ export function usage(error: Error) {
 this function is used as the entry-point.
 
 ```typescript filename="./src/lima.ts"
-export async function cli(args: string[]) {
+export function cli(args: string[]) {
   let [command, path] = args
 ```
 
@@ -467,36 +504,18 @@ desire to add a lima-specific weaving function.
 
 ```typescript filename="./src/lima.ts"
   if (command != "tangle") {
-    return usage(new Error("only tangling is supported"))
+    throw new Error("only tangling is supported")
   }
 
-  if (!existsSync(path)) {
-    return usage(new Error("source file must exist"))
-  }
+  let input = getStream(path)
 
-  let file = await fs.readFile(path)
-  let tree = eat(file)
-  await walk(tree)
-}
-```
-
-### walk
-
-we create a global `CodeNodeProcessor`, and then we recursively walk the
-document looking for code nodes, and if we find a code node then we invite the
-`CodeNodeProcessor` to take a look.
-
-```typescript filename="./src/lima.ts"
-let code = new CodeNodeProcessor;
-
-async function walk(node: any) {
-  if (node.type == "code") {
-    await code.process(node as Code)
-  } else if ("children" in node && Array.isArray(node.children)) {
-    for (let child of node.children) {
-      await walk(child)
-    }
-  }
+  input.pipe(stream(
+	 unified()
+		 .use(remarkParse)
+		 .use(remarkFrontmatter)
+		 .use(remarkGfm)
+		 .use(tangle)
+  ))
 }
 ```
 
@@ -509,14 +528,13 @@ lima](#cli).
 we mention `dist` here and not `src` because that's what the path will be after
 typescript compilation.
 
-```javascript filename="bin/lima", #!="/usr/bin/env node"
-let lima = require("../dist/lima")
-
-lima.cli(process.argv.slice(2))
-  .catch(error => {
-    process.stderr.write(error.message + "\n")
-    process.exit(22)
-  })
+```javascript filename="bin/lima.js", #!="/usr/bin/env node"
+import {cli, usage} from "../dist/lima.js"
+try {
+	cli(process.argv.slice(2))
+} catch(error) {
+	usage(error)
+}
 ```
 
 ## package info
@@ -524,11 +542,11 @@ lima.cli(process.argv.slice(2))
 ```json filename="package.json"
 {
   "name": "@chee/lima",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "literate programming with markdown",
-  "main": "dist/lima.js",
+  "type": "module",
   "bin": {
-    "lima": "bin/lima"
+    "lima": {"lima" :"bin/lima.js"}
   },
   "scripts": {
     "build": "tsc",
@@ -537,15 +555,21 @@ lima.cli(process.argv.slice(2))
   "author": "chee <chee@snoot.club>",
   "license": "GPL-3.0+",
   "devDependencies": {
-    "@tsconfig/node14": "^1.0.0",
-    "@tsconfig/recommended": "^1.0.1",
     "@types/node": "^14.14.20",
-    "typescript": "^4.1.3"
+    "typescript": "^4.7.4"
   },
   "dependencies": {
-    "make-dir": "^2.1.0",
-    "mdast-util-from-markdown": "^0.8.4",
-    "untildify": "^4.0.0"
+	 "make-dir": "^2.1.0",
+	 "mdast-util-from-markdown": "^0.8.4",
+	 "remark-frontmatter": "^4.0.1",
+	 "remark-gfm": "^3.0.1",
+	 "remark-parse": "^10.0.1",
+	 "unified": "^10.1.2",
+    "unified-stream": "^2.0.0",
+	 "untildify": "^4.0.0"
+  },
+  "volta": {
+	 "node": "18.7.0"
   }
 }
 ```
@@ -554,11 +578,16 @@ lima.cli(process.argv.slice(2))
 
 ```json filename="tsconfig.json"
 {
-  "extends": "@tsconfig/node14/tsconfig.json",
   "include": ["src/**/*"],
   "exclude": ["test/**"],
   "compilerOptions": {
-    "outDir": "dist"
+    "lib": ["es2022"],
+	 "strict": true,
+	 "allowSyntheticDefaultImports": true,
+	 "skipLibCheck": true,
+	 "moduleResolution": "node",
+    "outDir": "dist",
+	 "module": "es2022"
   }
 }
 ```
@@ -566,11 +595,12 @@ lima.cli(process.argv.slice(2))
 ## publish script
 
 ```fish #!="/usr/bin/env fish", filename="scripts/publish.fish"
-./bin/lima README.md
-npm run build
-./bin/lima README.md
-npm run build
-rm .gitignore
-npm publish
+lima tangle README.md
+and npm run build
+and ./bin/lima.js tangle README.md
+and npm run build
+and ./bin/lima.js tangle README.md
+and rm .gitignore
+and npm publish
 echo '*' > .gitignore
 ```
