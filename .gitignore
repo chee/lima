@@ -1,3 +1,9 @@
+# files that are built from the readme
+/bin/
+/package*.json
+/src/
+/tsconfig.json
+
 # Logs
 logs
 *.log
