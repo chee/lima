@@ -567,17 +567,11 @@ lima.cli(process.argv.slice(2))
 ## publish script
 
 ```fish #!="/usr/bin/env fish", filename="scripts/publish.fish"
-set -q argv[1]; or begin
-	echo "publish.fish <npm_version_arg>"
-	exit 28
-end
 ./bin/lima README.md
 npm run build
 ./bin/lima README.md
 npm run build
-npm version $argv[1] --no-git-tag-version
 rm .gitignore
 npm publish
-sed -i'' 's/^\\s\\+"version".*/  "version": "'(jq -r .version package.json)'",/' README.md
 echo '*' > .gitignore
 ```
