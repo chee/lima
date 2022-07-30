@@ -94,15 +94,26 @@ the metaline would be the part that looks like this:
 (that example would set the output filename to `hello_world.rb`, set the first line
 of the file to `"#!/usr/bin/env ruby"` and activate the executable bit :))
 
-we're going to parse the metaline using a state machine.
+### metaline types
 
-### meta type
+Parsing can return a `Metaline` or an error.
 
-the metaline is parsed to a `Metaline`, an object of arbitrary keys whose values
-can be bools or strings.
+the metaline is an object of arbitrary keys whose values can be bools or
+strings.
 
 ```typescript filename="src/lib/metaline-parser.ts"
 type Metaline = {[property: string]: boolean|string}
+export class MetalineParsingError extends Error {}
+export class MetalineParsingWarning extends Error {}
+```
+
+the return value is an object with the parsed metaline object and the errors
+
+```typescript filename="src/lib/metaline-parser.ts"
+interface MetalineReturn {
+	metaline: Metaline
+	errors: MetalineErrors
+}
 ```
 
 ### states
