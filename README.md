@@ -10,6 +10,9 @@ Programming](https://en.wikipedia.org/wiki/Literate_programming).
 
 this version is written in [typescript](https://www.typescriptlang.org/).
 
+<small><sub>the tangled code is viewable on-line at
+[lima-tangled](https://git.sr.ht/~chee/lima-tangled).</sub></small>
+
 ## intro
 
 the syntax is inspired by the beautiful <!-- and complex -->
@@ -496,7 +499,7 @@ this function is used as the entry-point.
 
 ```typescript filename="./src/lima.ts"
 export function cli(args: string[]) {
-  let [command, path] = args
+  let [command, filename] = args
 ```
 
 `lima(1)` expects a sub-command of `tangle` in case there's ever a need or
@@ -507,7 +510,7 @@ desire to add a lima-specific weaving function.
     throw new Error("only tangling is supported")
   }
 
-  let input = getStream(path)
+  let input = getStream(filename)
 
   input.pipe(stream(
 	 unified()
@@ -542,11 +545,11 @@ try {
 ```json filename="package.json"
 {
   "name": "@chee/lima",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "literate programming with markdown",
   "type": "module",
   "bin": {
-    "lima": {"lima" :"bin/lima.js"}
+    "lima": "bin/lima.js"
   },
   "scripts": {
     "build": "tsc",
