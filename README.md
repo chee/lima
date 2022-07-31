@@ -4,8 +4,8 @@
 
 lima is a tool for generating computer programs from
 [Markdown](https://daringfireball.net/projects/markdown/) documents that
-describe them. it's an implementation of
-[Knuth](https://cs.stanford.edu/~knuth/)'s concept of [Literate
+describe them. it's inspired by [Knuth](https://cs.stanford.edu/~knuth/)'s
+concept of [Literate
 Programming](https://en.wikipedia.org/wiki/Literate_programming).
 
 this version is written in [typescript](https://www.typescriptlang.org/).
