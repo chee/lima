@@ -330,11 +330,10 @@ home directory. though maybe i'll remove this feature, because it was initially
 added when i imagined lima being used for system-wide literate dotfiles (docfiles).
 
 ```typescript filename="src/lib/code-node-processor.ts"
+import {createWriteStream, promises as fs} from "node:fs"
+import path from "node:path"
 import expandTilde from "untildify"
-import path from "path"
 import MetalineParser from "./metaline-parser.js"
-import makeDirectory from "make-dir"
-import {createWriteStream} from "fs"
 ```
 
 ```typescript filename="src/lib/code-node-processor.ts"
@@ -385,7 +384,7 @@ if the file is in a directory, then we should make that directory!!
 
 ```typescript filename="src/lib/code-node-processor.ts"
       if (path.basename(fn) != fn) {
-        await makeDirectory(path.dirname(fn))
+			await fs.mkdir(path.dirname(fn), {recursive: true})
       }
 ```
 
