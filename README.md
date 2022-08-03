@@ -378,6 +378,8 @@ before so we can open the file in append mode if we have. we add it to the
       let seen = this.seen.has(fn)
       this.seen.add(fn)
       let shebang = meta.shebang || meta["#!"]
+		// TODO make this real, and work with pairs
+		let comment = meta.filename.endsWith(".ts") ? "//" : null
 ```
 
 if the file is in a directory, then we should make that directory!!
@@ -408,23 +410,28 @@ the shebang. we have no backtracking here, so we can't do anything if someone
 adds a shebang to a later block but we emit a warning. i'm streamin' here.
 
 ```typescript filename="src/lib/code-node-processor.ts"
-      if (shebang && !seen) {
-        stream.write("#!" + shebang + "\n")
-      } else if (shebang) {
-                process.stderr.write(`warning: ignoring shebang on already-seen file\n`)
-          process.stderr.write(`(only the first reference to a file should set a shebang)\n`)
-      }
+let start = code.position?.start?.line || ""
+let end = code.position?.end?.line || ""
+comment && stream.write(comment + " START " + start + "\n")
 
-		stream.write(code.value + "\n")
-      stream.close()
+if (shebang && !seen) {
+    stream.write("#!" + shebang + "\n")
+} else if (shebang) {
+    process.stderr.write(`warning: ignoring shebang on already-seen file\n`)
+    process.stderr.write(`(only the first reference to a file should set a shebang)\n`)
+}
 
-      return new Promise(yay => {
-        stream.on("close", yay)
-      })
-    } else if ("filename" in meta) {
-      throw new TypeError(`filename must be a string, got ${meta.filename}`)
-    }
-  }
+stream.write(code.value + "\n")
+comment && stream.write(comment + " END " + end + "\n")
+stream.close()
+
+return new Promise(yay => {
+    stream.on("close", yay)
+})
+} else if ("filename" in meta) {
+    throw new TypeError(`filename must be a string, got ${meta.filename}`)
+}
+}
 
 }
 ```
@@ -478,17 +485,17 @@ looking for code nodes, and if we find a code node then we invite the
 
 ```typescript filename="./src/lima.ts"
 function tangle(this: typeof tangle) {
-  let code = new CodeNodeProcessor
-  Object.assign(this, {Compiler: walk})
-  async function walk(node: any) {
-    if (node.type == "code") {
-      await code.process(node as Code)
-    } else if ("children" in node && Array.isArray(node.children)) {
-      for (let child of node.children) {
-        await walk(child)
-      }
+    let code = new CodeNodeProcessor
+    Object.assign(this, {Compiler: walk})
+    async function walk(node: any) {
+	if (node.type == "code") {
+	    await code.process(node as Code)
+	} else if ("children" in node && Array.isArray(node.children)) {
+	    for (let child of node.children) {
+		await walk(child)
+	    }
+	}
     }
-  }
 }
 ```
 
