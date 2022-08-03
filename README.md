@@ -4,14 +4,14 @@
 
 lima is a tool for generating computer programs from
 [Markdown](https://daringfireball.net/projects/markdown/) documents that
-describe them. it's inspired by [Knuth](https://cs.stanford.edu/~knuth/)'s
+describe them. it's inspired by [Knuth](https://cs.stanford.edu/\~knuth/)'s
 concept of [Literate
 Programming](https://en.wikipedia.org/wiki/Literate_programming).
 
 this version is written in [typescript](https://www.typescriptlang.org/).
 
 <small><sub>the tangled code is viewable on-line at
-[lima-tangled](https://git.sr.ht/~chee/lima-tangled).</sub></small>
+[lima-tangled](https://git.sr.ht/\~chee/lima-tangled).</sub></small>
 
 ## intro
 
@@ -20,18 +20,18 @@ the syntax is inspired by the beautiful <!-- and complex -->
 
 ### terminology
 
-- **_weave_/_woven_** :: the documentation generated for viewing by a person is
-  said to weave both prose and code. for example, a web page or pdf.
-- **_tangle_/_tangled_** :: the code extracted from the source document into a
-  form for execution or compilation by a computer is said to be "tangled" for
-  some reason.
-- **_metaline_** :: a line of comma/space separated key=value pairs for
-  providing instructions to `lima` on how a block of code should be tangled
+*   ***weave*/*woven*** :: the documentation generated for viewing by a person is
+    said to weave both prose and code. for example, a web page or pdf.
+*   ***tangle*/*tangled*** :: the code extracted from the source document into a
+    form for execution or compilation by a computer is said to be "tangled" for
+    some reason.
+*   ***metaline*** :: a line of comma/space separated key=value pairs for
+    providing instructions to `lima` on how a block of code should be tangled
 
 ### metaline opts
 
 | option   | type   | info                                                   |
-|----------|--------|--------------------------------------------------------|
+| -------- | ------ | ------------------------------------------------------ |
 | filename | string | required for the block to be tangled, but optional     |
 | #!       | string | shebang to add at top of file. sets the executable bit |
 
@@ -49,7 +49,6 @@ fenced code blocks should be able to be used to weave the code.
 
 however, the `tangle` command has been left as a subcommand so that a future
 `weave` command could be added if it ever seems like a good idea.
-
 
 ### installing
 
@@ -101,7 +100,7 @@ of the file to `"#!/usr/bin/env ruby"` and activate the executable bit :))
 
 parsing returns a `Metaline`.
 
-`Metaline` is a map of `string` keys to `bool` or string`` values.
+`Metaline` is a map of `string` keys to `bool` or string\`\` values.
 
 ```typescript filename="src/lib/metaline-parser.ts"
 type Metaline = {[property: string]: boolean|string}
@@ -443,14 +442,17 @@ codeblock
 
 ```typescript filename="./src/lima.ts"
 import {unified} from "unified"
-import type {CompilerFunction} from "unified"
-import {stream} from "unified-stream"
+import { stream } from "unified-stream"
 import remarkParse from "remark-parse"
 import remarkFrontmatter from "remark-frontmatter"
 import remarkGfm from "remark-gfm"
-import type {Code} from "mdast"
-import {createReadStream, existsSync} from "fs"
+import remarkStringify from "remark-stringify"
+import type {Code, Root} from "mdast"
+import {createReadStream, existsSync, readFileSync} from "fs"
 import CodeNodeProcessor from "./lib/code-node-processor.js"
+import parseArgs from "minimist"
+import {visit} from "unist-util-visit"
+
 ```
 
 ### usage printer
@@ -461,6 +463,7 @@ export function usage(error: Error) {
   process.stdout.write("lima tangle <file>\n")
   process.exit(2)
 }
+
 ```
 
 ```typescript filename="./src/lima.ts"
@@ -475,6 +478,7 @@ function getStream(path?: string) {
 		return process.stdin
   }
 }
+
 ```
 
 ### unist tangle
@@ -485,18 +489,61 @@ looking for code nodes, and if we find a code node then we invite the
 
 ```typescript filename="./src/lima.ts"
 function tangle(this: typeof tangle) {
-    let code = new CodeNodeProcessor
-    Object.assign(this, {Compiler: walk})
-    async function walk(node: any) {
-	if (node.type == "code") {
-	    await code.process(node as Code)
-	} else if ("children" in node && Array.isArray(node.children)) {
-	    for (let child of node.children) {
-		await walk(child)
-	    }
+	let code = new CodeNodeProcessor
+	Object.assign(this, { Compiler: walk })
+	async function walk(node: any) {
+		if (node.type == "code") {
+			await code.process(node as Code)
+		} else if ("children" in node && Array.isArray(node.children)) {
+			for (let child of node.children) {
+				await walk(child)
+			}
+		}
 	}
-    }
 }
+
+function Untangle (src: string) {
+	let blocks: {[key: string]: string} = {}
+	let state = "out"
+	let curr = "0"
+	for (let line of src.split(/\n/)) {
+		if (state == "out") {
+			let match = line.match(/\/\/\s+START\s+(\d+)/)
+			if (match) {
+				curr = match[1]
+				blocks[curr] = ""
+				state = "in"
+			}
+		} else if (state == "in") {
+			let match = line.match(/\/\/\s+END\s+(\d+)/)
+			if (match) {
+				state = "out"
+			} else {
+				blocks[curr] += line + "\n"
+			}
+		}
+	}
+
+
+	let fn = () =>{
+		return function walk(node: Root) {
+			visit(node, 'code', (node: Code) => {
+				let index = node.position?.start?.line
+				if (!index) {
+					return
+				}
+				let block = blocks[index]
+
+				if (block) {
+					node.value = block
+				}
+			})
+		}
+	}
+
+	return fn
+}
+
 ```
 
 ### cli
@@ -505,29 +552,48 @@ this function is used as the entry-point.
 
 ```typescript filename="./src/lima.ts"
 export function cli(args: string[]) {
-  let [command, filename] = args
+  let [command, ...rest] = args
+
 ```
 
 `lima(1)` expects a sub-command of `tangle` in case there's ever a need or
 desire to add a lima-specific weaving function.
 
 ```typescript filename="./src/lima.ts"
-  if (command != "tangle") {
-    throw new Error("only tangling is supported")
-  }
+	if (command == "tangle") {
+		// TODO expect args to be 1 long
+		let input = getStream(rest[0])
 
-  let input = getStream(filename)
+		input.pipe(stream(
+			unified()
+				.use(remarkParse)
+				.use(remarkFrontmatter)
+				.use(remarkGfm)
+				.use(tangle)
+		))
+	} else if (command == "untangle") {
+		let args = parseArgs(rest)
 
-  input.pipe(stream(
-	 unified()
-		 .use(remarkParse)
-		 .use(remarkFrontmatter)
-		 .use(remarkGfm)
-		 .use(tangle)
-  ))
+
+		if (!args.target || !args.source) {
+			throw new Error("--target README.md --source source.ts")
+		}
+
+		let target = getStream(args.target)
+		let source = readFileSync(args.source, {encoding: "utf-8"})
+
+		target.pipe(stream(
+			unified()
+				.use(remarkParse)
+				.use(remarkFrontmatter)
+				.use(remarkGfm)
+				.use(Untangle(source))
+				.use(remarkStringify)
+		)).pipe(process.stdout)
+	}
 }
-```
 
+```
 
 ### entry point
 
